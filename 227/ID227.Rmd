@@ -1,0 +1,396 @@
+---
+title: "“Evacuate the Dancefloor”:"  
+author: 
+  - <font size = "7">Kework K. Kalustian^1^,   Nicolas Ruth^2^</font size>
+  - <font size = "6">kework.kalustian@ae.mpg.de</font size>
+  - <font size="5">^1^Music Dept., MPIEA, Frankfurt/Main, Germany,   ^2^Goldsmiths, University of London, London, United Kingdom </font size>
+  - <font size = "7">ICMPC16 -- ESCOM11</font size>
+subtitle: "Exploring and Classifying Spotify Music Listening Before and During the COVID-19 Pandemic in DACH Countries"
+output:
+ revealjs::revealjs_presentation:
+  reveal_plugins: [zoom]
+  incremental: true
+  center: true
+  self_contained: false
+  theme: moon
+ css: [styles.css, slides.css]  
+---
+# B A C K G R O U N D 
+
+```{css, echo = F}
+
+body {
+  background-image: url('https://raw.githubusercontent.com/KewKalustian/ICMPC16-ESCOM11/main/ID_227_Kalustian_%26_Ruth/Img/190814-MPIEA-Logo-E-XS-L-WHITE-digital.png'), url('https://upload.wikimedia.org/wikipedia/commons/d/d6/Goldsmith_University-logo.svg');
+  background-repeat: no-repeat;
+  background-position: 5% 5%, 5% 12.5%;
+  background-size: auto 4%, 12%;
+  } 
+
+
+.reveal,
+.reveal h1,
+.reveal h2,
+.reveal h3,
+.reveal h4,
+.reveal h5,
+.reveal h6{
+  headingFont: 'Montserrat', Impact, sans-serif;
+  mainFont: 'Open Sans', sans-serif;
+  color: #f7f7e9;
+  letter-spacing: normal;
+  text-shadow: none;
+  word-wrap: break-word;}
+
+
+.reveal p {
+    text-align: left;
+}
+
+.reveal div {
+  display: flex;
+  justify-content: center;
+}
+
+
+.reveal container{
+    display: flex;
+}
+ col{
+    flex: 1;
+}
+
+```
+```{r setup, include=FALSE}
+library(tidyverse)
+library(knitr)
+library(kableExtra)
+knitr::opts_chunk$set(
+  cache = TRUE,
+  warning = T, message = T, 
+  fig.align = 'center')
+```
+
+
+- <font size="5">The COVID-19 pandemic is an event with far-reaching stressful consequences.</font size>
+<br>
+<br>
+- <font size="5">People tend to use more musical media during nationwide lockdowns (Fink et al., 2021) to cope with this crisis situation.</font size>  
+<br>
+<br>
+- <font size="5">When considering people's active use of musical media, it seems, in this vein, reasonable to examine the characteristics of the music that people have listened to.</font size>  
+<br>
+<br>
+- <font size="5">Spotify defines the so-called DACH region (Germany, Austria, and Switzerland) as one target audience, which is why we decided to examine the daily top 200 charts of these countries.</font size>  
+
+
+# A I M S 
+
+<section style="text-align: justify;">
+
+>RQ: To what extent can we estimate and classify the listening behavior via proxy variables during the pandemic and a comparable reference period based on Spotify’s provided audio features for each track by taking the mood-related audio features particularly into account?
+
+</section>
+
+<div>
+<img src="https://media.giphy.com/media/8wbpmeim0LmdW/giphy.gif" style="background:none; width:190px;height:190px;border:none; box-shadow:none;">
+</div>
+
+## HYPOTHESES
+
+
+>-	H~1~: The dimensionality of Spotify’s mood-related audio features can be reduced to fewer clusters so that potential differences (r ≥ .10) can be observed in the stream counts of these clusters between the pre-pandemic and the pandemic period for each and across all DACH countries. 
+<br>
+<br>
+>-	H~2~: The mood-related clusters and the remaining audio features can successfully be implemented in a classification task that aims to classify both periods in an interpretable way so that a high overall accuracy can be achieved (ACC ≥ 90%).
+
+
+
+# M E T H O D S
+
+> - Automated data collection 
+> - Exploratory data analysis 
+> - NHST 
+> - (Un)supervised and Interpretable Machine Learning
+
+<div>
+<img src="https://media.giphy.com/media/8wbpmeim0LmdW/giphy.gif" style="background:none; width:190px;height:190px;border:none; box-shadow:none;">
+</div>
+
+## DATA RETRIEVAL & CLEANING
+
+- Web-scraping: Daily top 200 chart positions, song titles, their stream counts, and
+ track IDs between March 10^th^, 2020, and June 14^th^, 2020, and for the same period in 2019 
+ ($N_{Total} = 115198$) from [Spotify’s  website](https://spotifycharts.com/regional/de/daily/) for
+ the DACH countries (Germany, Austria, Switzerland)
+ 
+  - By using arguments of [Hadley Wickham’s](http://hadley.nz/) R package <a  href="http://github.com/hadley/rvest">rvest</a> for scraping websites within a simple ``function`` and by using his <a href="https://github.com/tidyverse">tidyverse</a>):
+ 
+  - Audio features were collected by using [Spotify’s API](https://developer.spotify.com/) and the R package “spotifyr” ([Thompson et al., 2021](https://github.com/charlie86/spotifyr)) on the previously retrieved song IDs.
+ 
+
+## EXPLORATORY DATA ANALYSIS
+
+
+<font size="5"> **Figure 1** </font size>
+<br>
+<font size="5">
+*Comparison of Stream Counts of Daily Top 200 Spotify Charts Before and During the Pandemic Per Country and Across all DACH Countries.*
+</font size> 
+<br>
+<br>
+```{r plot_2, echo=FALSE, out.width = '67%', fig.align = "center", fig.pos= "H"}
+
+include_graphics("/Users/Kework/Desktop/R_Projects/227/PsychArchives/Plots/Figure_1_Histograms.png")
+```
+<font size="4">*Note. A log-scaling with base 10 was applied to the x-axis for visual purposes, mainly, to avoid a heavy tail of the higher stream counts.*</font size>  
+
+
+
+# Toward a Classification Model
+
+- Accounting H~1~: Dimensionality reduction of the mood-related audio features by using a clustering approach. 
+
+- Goal: 
+  1. More interpretable and summarized mood-related audio features.
+  
+  2. Testing whether people streamed more of a certain mood cluster during the pandemic.
+  
+  3. Implementing mood clusters as input variables into our classification model. 
+
+# k-MEANS CLUSTERING
+
+> - Audio features were clustered according to Hartigan and Wong's k-means algorithm with 4 estimated centroids/centers according to the gap statistic ([Tibshirani et al. 2001](https://rss.onlinelibrary.wiley.com/doi/10.1111/1467-9868.00293)).
+
+<div>
+<img src="https://media.giphy.com/media/8wbpmeim0LmdW/giphy.gif" style="background:none; width:190px;height:190px;border:none; box-shadow:none;">
+</div>
+
+## CLUSTER SOLUTION
+
+<font size="5"> **Table 1** </font size>
+<br>
+<font size="5">
+*K-means Cluster Solution on Min-Max-Normalized and Rescaled Mood-Related Audio Features.*
+</font size> 
+<br>
+<br>
+
+| Cluster	  |  n	    | Mode   | Danceability  | Energy	  | Loudness (rescaled)  | Valence   | Tempo (rescaled) |
+| :-------: | :-----: | :----: | :-----------: | :------: | :------------------: | :-------: | :--------------: |
+| 1	        | 26990	  |   1    |     .672      | .572     |        .738	         | **.335**	 |      .120        |
+| 2	        | 32626	  |   0    |     .754      | .716     |        .812	         | **.678**	 |      .121        |
+| 3	        | 26129	  |   1    |     .738      | .722     |        .823	         | **.640**	 |      .119        |
+| 4	        | 29453	  |   0    |     .679      | .605     |        .748	         | **.350**	 |      .120        |
+
+<br>
+<font size="5">
+*Note. BSS/TSS ratio = 83.3%. Mean values (Danceability, Engery, Loudness, Valence) greater than or equal to .5 represent, e.g., a higher (emotional) positivity (Valence) potentials according to the Arousal-Valence circumplex model. Hence, if the values in Danceablitiy, Energy, and Loudness are also greater than or equal to .5, these values represent a higher arousal potential.*</font size>  
+
+
+## CLUSTER SOLUTION II
+
+<section style="text-align: left;">
+<font size="5"> **Table 2** </font size>
+<br>
+<font size="5">
+*K-means Cluster Solution on Min-Max-Normalized and Rescaled Mood-Related Audio Features.*
+</font size> 
+<br>
+<br>
+```{r tab, eval=T,echo=FALSE, message=F}
+x <- read_csv("clusters.csv")
+x <- data.frame(x)
+kable(x, digits = 3, "html") %>% 
+  kable_styling(font_size = 16) 
+```
+<br>
+</section>
+
+---
+
+<font size="5"> **Figure 3** </font size>
+<br>
+<font size="5">
+*3D Scatterplot with Ellipsoids (1st SD) of the K-Means Cluster Solution Across all DACH Countries.*
+</font size> 
+<br>
+<br>
+
+
+<div>
+<img class="plain" src="/Users/Kework/Desktop/R_Projects/227/Clustanimation.gif" style="background:none;border:none; box-shadow:none;" width =560px; height=360px;>
+</div>
+
+
+## DIFFERENCES
+
+> - Multiple comparisons via Dunn test with Holm correction at an alpha-level of 5%.
+
+<section style="text-align: left;">
+<font size="5"> **Table 3** </font size>
+<br>
+<font size="5">
+*Significant Differences in Cluster Stream Counts Across DACH Countries.*
+</font size> 
+<br>
+<br>
+```{r tab1, eval=T,echo=FALSE, message=F}
+y <- read_csv("tab.csv")
+y <- data.frame(y)
+kable(y, digits = 3, "html") %>% 
+  kable_styling(font_size = 14) 
+```
+<br>
+<font size="5"> **Table 4** </font size>
+<br>
+<font size="5">
+*Significant Differences in Cluster Stream Counts per DACH Country.*
+</font size> 
+<br>
+<br>
+```{r tab2, eval=T,echo=FALSE, message=F}
+z <- read_csv("tab2.csv")
+z <- data.frame(z)
+kable(z, digits = 3, "html") %>% 
+  kable_styling(font_size = 14) 
+```
+</section>
+
+---
+
+
+<font size="5"> **Figure 4** </font size>
+<br>
+<font size="5"> 
+*Combined Box, Violin, and Scatter Plots of the K-Means Cluster Solution for Each DACH Country and Across all DACH Countries Against Their Median Stream Counts Before and During the Pandemic.* </font size> 
+<br>
+<br>
+```{r plot_3, echo=FALSE, out.width = '67%', fig.pos= "H"}
+
+include_graphics("/Users/Kework/Desktop/R_Projects/227/PsychArchives/Plots/Figure_4_Combi_Plot.png")
+```
+
+
+# BUILDING A SVM CLASSFIER
+
+- <font size="5">Accounting H~2~: Building a binary (non-linear) SVM classifier to classify both periods (pandemic vs. non pandemic) across all DACH countries based on the identified mood-clusters, rescaled stream counts, and chart positions as well as the variables “acousticness”, “speechiness”, “liveness”, “instrumentalness”, the duration of the songs, and the DACH countries as factors.</font size>
+- <font size="5">We decided to build a non-linear (radial kernel) SVM classifier.</font size> 
+     - <font size="4">Separation between pandemic and non-pandemic cases based on a curved surface in a high-dimensional space (instead of a flat surface) that maximizes margin around itself.</font size>
+     - <font size="4">That is, the margin is a distance around the modeled hyperplane, which intercepts as few training cases as possible but as much as necessary (according to the hyperparameters).</font size>
+     - <font size="4"> The cases that intercept the margin are the so-called support vectors because they *support* the position of the hyperplane (surface).</font size> 
+<div>
+<img src="https://media.giphy.com/media/8wbpmeim0LmdW/giphy.gif" style="background:none; width:110px;height:110px;border:none; box-shadow:none;">
+</div>
+
+## Model Training
+
+> - 80/20 split ratio between training and test set (both sets contain the same `track_ids` and `countries` and contain balanced classes; 50/50 ratio)
+<br>
+<br>
+> - 5-fold cross-validation with random grid search (due to computational costs) to identify the optimal values of the hyperparameters (C and $\gamma$), which, simply put, determine to what extent some misclassfications are allowed (avoiding over-/underfitting).
+<br>
+<br>
+> - Building on the outcomes of this 5-fold-cv, we trained the binary SVM classifier with a radial kernel function (C = 100 and $\gamma$ = 2), and applied it on the (not seen) test set to classify the two periods in question.
+
+## Confusion Matrix
+
+>- We assessed the model performance with the accuracy as the key error metric according to which our model could correctly classify observations that indeed belong to the one or the other period (i.e., true positives).
+
+<font size="5"> **Table 5** </font size>
+<br>
+<font size="5"> 
+*SVM classification confusion matrix* </font size> 
+<br>
+<br>
+
+|             | Correctly Classified         |	Actual	     | Precision |	Recall |	F1|
+|-----------  | :--------------------:| :-------------: | :----------:|:--------:| :--:|
+|	              | Observations  (Song IDs)|         	|    In %             |
+|No Pandemic	     | 11236           |      	11487	 |    97.93	  | 97.81	| 97.87|
+|Pandemic	   |   11244	            |     11482	     |   97.82	  | 97.92	| 97.87|
+
+
+
+
+## Variable Importance 
+
+<font size="5"> **Figure 5** </font size>
+<br>
+<font size="5"> 
+*Permutation-based Variable Importance (Independent Variables) for the SVM Model (Training Set).* </font size> 
+<br>
+<br>
+```{r plot_5, echo=FALSE, out.width = '67%', fig.pos= "H"}
+
+include_graphics("/Users/Kework/Desktop/R_Projects/227/PsychArchives/Plots/Figure_5_Variable_Imp.png")
+```
+
+## Partial dependence 
+
+<font size="5"> **Figure 6** </font size>
+<br>
+<font size="5"> 
+*Partial Dependence Plot of the Mood Clusters With Averaged Probabilities Regarding the Classification of the Pandemic Period.* </font size> 
+<br>
+<br>
+```{r plot_5.1, echo=FALSE, out.width = '67%', fig.pos= "H"}
+
+include_graphics("/Users/Kework/Desktop/R_Projects/227/PsychArchives/Plots/Figure_5.1_Partial_Dependence.png")
+```
+
+
+# C O N C L U S I O N  /   K e y   T a k e a w a y s
+
+- <font size="5">We could identify mood-related clusters of audio features with a BSS/TSS ratio of 83.3%. These clusters can represent music-listening behavior during the pandemic as a proxy in virtue of the different audio feature qualities. </font size>
+
+- <font size="4">We could find statistically significant differences with small to moderate effects (.149 ≤ $r$ ≤ .328) regarding the mood cluster stream counts within a country as well as across all countries between both periods. </font size>
+     - <font size="4"> Songs that belong to the cluster *Higher Arousal-Potential pos Emotionality minor* and *Moderate Arousal-Potential neg Emotionality minor* have been streamed less during the pandemic in Switzerland. </font size>
+     - <font size="4">In Germany, songs that belong to the cluster *Moderate Arousal-Potential neg Emotionality minor* have been streamed *more* during the pandemic. </font size>
+     - <font size="4">In Austria, no significant differences could be observed. </font size>
+     - <font size="4">Across all DACH countries, the songs belonging to the clusters *Moderate Arousal-Potential neg Emotionality* (both in major and minor) have been streamed more often during the pandemic. </font size>
+ 
+
+---
+
+- <font size="5">We also have evidence to support H~2~ based on the outcome of our built binary SVM classifier that yielded a high overall accuracy (ACC = 97.87%, 95% CI [0.977, 0.981]). </font size>
+   - <font size="4">Futhermore, we now know that the mood clusters are the most important input variables in classifying the pandemic period.</font size>
+   - <font size="4">This means, each period shows a distinct profile in terms of the mood-clusters, the used audio features of the track IDs and the grouping factor of the DACH countries.</font size>
+<br>
+<br>
+- All in all, using the top songs helped us to describe the music listening behavior of a great fraction of listeners in central European German-speaking countries via proxy variables.
+
+# Thanks!
+
+<div class=container>
+<div class="col">
+Please feel free to contact me and Nick:
+<br>
+<br>
+`r x<- icons::fontawesome$brands$twitter;icons::icon_style(x, fill="#f7f7e9")`  [KewKalustian](https://twitter.com/KewKalustian) 
+<br>
+<br>
+`r x<- icons::fontawesome$brands$github;icons::icon_style(x, fill="#f7f7e9")`  [KewKalustian](https://github.com/KewKalustian) 
+<br>
+<br>
+`r x<- icons::fontawesome$brands$linkedin;icons::icon_style(x, fill="#f7f7e9")`  [Kework K. Kalustian](https://www.linkedin.com/in/kework-k-kalustian-7730a6166/) 
+</div>
+
+<div>
+<br>
+<br>
+`r x<- icons::fontawesome$brands$twitter;icons::icon_style(x, fill="#f7f7e9")`  [nickruth](https://twitter.com/nickruth) 
+<br>
+<br>
+`r x<- icons::fontawesome$brands$github;icons::icon_style(x, fill="#f7f7e9")`  [NicolasRuth](https://github.com/NicolasRuth) 
+<br>
+<br>
+`r x<- icons::fontawesome$brands$linkedin;icons::icon_style(x, fill="#f7f7e9")`  [Nicolas Ruth](https://www.linkedin.com/in/nicolas-ruth-b4022658/) 
+<br>
+<br>
+</div>
+</div>
+<br>
+<br>
+<br>
+<br>
+<font size="4">Slides created with  `r x <-icons::fontawesome$solid$'mug-hot';icons::icon_style(x, fill="#f7f7e9")`  and via the R package [**revealjs**](https://github.com/rstudio/revealjs).</font size>
